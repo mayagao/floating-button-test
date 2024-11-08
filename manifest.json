@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "URL Dot Indicator",
+  "version": "1.0",
+  "description": "Displays contextual buttons based on URL",
+  "permissions": ["activeTab", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["styles.css"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
