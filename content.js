@@ -1,4 +1,5 @@
 let shrinkTimeout;
+let isMouseInCorner = false;
 
 function hideElement(selector) {
   const elements = document.querySelectorAll(selector);
@@ -46,35 +47,86 @@ function createDotIndicator() {
   const container = document.createElement("div");
   container.className = "url-dot-indicator";
 
-  // Create single button container for all buttons
   const buttonContainer = document.createElement("div");
   buttonContainer.className = "button-container";
 
   const url = window.location.href.toLowerCase();
+  const isSpecificIssue = /\/issues\/\d+/.test(url);
+  const isSpecificPR = /\/pull\/\d+/.test(url);
+  const isIssuesList = url.endsWith("/issues");
+  const isPRList = url.endsWith("/pulls");
+  const isBlob = url.includes("/blob/");
 
-  if (url.includes("issues")) {
+  if (isSpecificIssue) {
     buttonContainer.appendChild(
       createButton("summarize", "Summarize this issue")
     );
     buttonContainer.appendChild(createButton("explain", "Explain this issue"));
-  } else if (url.includes("pr")) {
+  } else if (isSpecificPR) {
     buttonContainer.appendChild(createButton("summarize", "Summarize this PR"));
     buttonContainer.appendChild(
       createButton("generate", "Generate suggestion")
     );
+  } else if (isIssuesList) {
+    buttonContainer.appendChild(createButton("summarize", "Summarize all"));
+  } else if (isPRList) {
+    buttonContainer.appendChild(createButton("summarize", "Summarize all"));
+  } else if (isBlob) {
+    buttonContainer.appendChild(
+      createButton("summarize", "Summarize this file")
+    );
+    buttonContainer.appendChild(createButton("explain", "Explain this code"));
   }
 
-  // Add divider if we have action buttons
-  if (url.includes("issues") || url.includes("pr")) {
+  if (isSpecificIssue || isSpecificPR || isIssuesList || isPRList || isBlob) {
     buttonContainer.appendChild(createDivider());
   }
 
-  // Always add the Copilot button
-  buttonContainer.appendChild(createButton("copilot", "Open Dotcom Chat"));
+  const copilotButton = createButton("copilot", "Open Dotcom Chat");
+  buttonContainer.appendChild(copilotButton);
 
   container.appendChild(buttonContainer);
   document.body.appendChild(container);
+
+  // Add hover logic
+  buttonContainer.addEventListener("mouseenter", () => {
+    clearTimeout(shrinkTimeout);
+    buttonContainer.classList.remove("single-button");
+    isMouseInCorner = true;
+  });
+
+  buttonContainer.addEventListener("mouseleave", () => {
+    isMouseInCorner = false;
+    startShrinkTimer(buttonContainer);
+  });
+
+  startShrinkTimer(buttonContainer);
 }
+
+function startShrinkTimer(buttonContainer) {
+  clearTimeout(shrinkTimeout);
+  shrinkTimeout = setTimeout(() => {
+    if (!isMouseInCorner) {
+      buttonContainer.classList.add("single-button");
+    }
+  }, 2000);
+}
+
+// Listen for mouse movements
+window.addEventListener("mousemove", (event) => {
+  const { clientX, clientY } = event;
+  const { innerWidth, innerHeight } = window;
+  const cornerThreshold = 140; // 100px + 40px buffer
+
+  if (
+    clientX > innerWidth - cornerThreshold &&
+    clientY > innerHeight - cornerThreshold
+  ) {
+    isMouseInCorner = true;
+  } else {
+    isMouseInCorner = false;
+  }
+});
 
 // Watch for URL changes and DOM changes
 let lastUrl = location.href;
