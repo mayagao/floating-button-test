@@ -34,6 +34,11 @@ function createDivider() {
 }
 
 function createDotIndicator() {
+  let hasInitiallyShrunk = false;
+  let shrinkTimeout;
+  let isScrolling = false;
+  let scrollTimeout;
+
   // Remove existing indicator if any
   const existingIndicator = document.querySelector(".url-dot-indicator");
   if (existingIndicator) {
@@ -55,30 +60,37 @@ function createDotIndicator() {
   const isSpecificPR = /\/pull\/\d+/.test(url);
   const isIssuesList = url.endsWith("/issues");
   const isPRList = url.endsWith("/pulls");
-  const isBlob = url.includes("/blob/");
+  const isTree = url.includes("tree/");
 
-  if (isSpecificIssue) {
+  const isBlob = url.includes("/blob/");
+  const isFailedRun =
+    url.includes("runs") &&
+    document.querySelector('svg[aria-label^="failed:"]') !== null;
+
+  if (isFailedRun) {
+    buttonContainer.appendChild(
+      createButton("summarize", "Summarize job errors")
+    );
+  } else if (isSpecificIssue) {
     buttonContainer.appendChild(
       createButton("summarize", "Summarize this issue")
     );
-    buttonContainer.appendChild(createButton("explain", "Explain this issue"));
+    buttonContainer.appendChild(createButton("explain", "Generate a plan"));
   } else if (isSpecificPR) {
     buttonContainer.appendChild(createButton("summarize", "Summarize this PR"));
     buttonContainer.appendChild(
-      createButton("generate", "Generate suggestion")
+      createButton("explain", "Propose improvements")
     );
-  } else if (isIssuesList) {
-    buttonContainer.appendChild(createButton("summarize", "Summarize all"));
-  } else if (isPRList) {
-    buttonContainer.appendChild(createButton("summarize", "Summarize all"));
   } else if (isBlob) {
     buttonContainer.appendChild(
       createButton("summarize", "Summarize this file")
     );
-    buttonContainer.appendChild(createButton("explain", "Explain this code"));
+    buttonContainer.appendChild(createButton("generate", "Refactor code"));
+  } else if (isTree) {
+    buttonContainer.appendChild(createButton("explain", "Explain codebase"));
   }
 
-  if (isSpecificIssue || isSpecificPR || isIssuesList || isPRList || isBlob) {
+  if (isSpecificIssue || isSpecificPR || isBlob || isFailedRun || isTree) {
     buttonContainer.appendChild(createDivider());
   }
 
@@ -88,45 +100,81 @@ function createDotIndicator() {
   container.appendChild(buttonContainer);
   document.body.appendChild(container);
 
-  // Add hover logic
-  buttonContainer.addEventListener("mouseenter", () => {
-    clearTimeout(shrinkTimeout);
-    buttonContainer.classList.remove("single-button");
-    isMouseInCorner = true;
+  // Add hover listeners
+  container.addEventListener("mouseenter", () => {
+    if (hasInitiallyShrunk) {
+      buttonContainer.classList.remove("single-button");
+    }
   });
 
-  buttonContainer.addEventListener("mouseleave", () => {
-    isMouseInCorner = false;
-    startShrinkTimer(buttonContainer);
-  });
-
-  startShrinkTimer(buttonContainer);
-}
-
-function startShrinkTimer(buttonContainer) {
-  clearTimeout(shrinkTimeout);
-  shrinkTimeout = setTimeout(() => {
-    if (!isMouseInCorner) {
+  container.addEventListener("mouseleave", () => {
+    if (hasInitiallyShrunk) {
       buttonContainer.classList.add("single-button");
     }
-  }, 5000);
+  });
+
+  // Handle click anywhere except the button container
+  //   document.addEventListener("click", (event) => {
+  //     // Check if click is outside the button container area
+  //     if (!hasInitiallyShrunk && !container.contains(event.target)) {
+  //       startShrinkTimer();
+  //     }
+  //   });
+  // Handle scroll
+  //   document.addEventListener(
+  //     "scroll",
+  //     () => {
+  //       if (!hasInitiallyShrunk) {
+  //         clearTimeout(scrollTimeout);
+
+  //         if (!isScrolling) {
+  //           isScrolling = true;
+  //           startShrinkTimer();
+  //         }
+
+  //         // Reset scroll flag after scrolling stops
+  //         scrollTimeout = setTimeout(() => {
+  //           isScrolling = false;
+  //           clearTimeout(shrinkTimeout);
+  //         }, 150); // Debounce scroll events
+  //       }
+  //     },
+  //     { passive: true }
+  //   );
+
+  function startShrinkTimer() {
+    clearTimeout(shrinkTimeout);
+    shrinkTimeout = setTimeout(() => {
+      buttonContainer.classList.add("single-button");
+      hasInitiallyShrunk = true;
+    }, 3000); // 3 second delay
+  }
 }
 
-// Listen for mouse movements
-window.addEventListener("mousemove", (event) => {
-  const { clientX, clientY } = event;
-  const { innerWidth, innerHeight } = window;
-  const cornerThreshold = 140; // 100px + 40px buffer
+// function startShrinkTimer(buttonContainer) {
+//   clearTimeout(shrinkTimeout);
+//   shrinkTimeout = setTimeout(() => {
+//     if (!isMouseInCorner) {
+//       buttonContainer.classList.add("single-button");
+//     }
+//   }, 4000);
+// }
 
-  if (
-    clientX > innerWidth - cornerThreshold &&
-    clientY > innerHeight - cornerThreshold
-  ) {
-    isMouseInCorner = true;
-  } else {
-    isMouseInCorner = false;
-  }
-});
+// Listen for mouse movements
+// window.addEventListener("mousemove", (event) => {
+//   const { clientX, clientY } = event;
+//   const { innerWidth, innerHeight } = window;
+//   const cornerThreshold = 140; // 100px + 40px buffer
+
+//   if (
+//     clientX > innerWidth - cornerThreshold &&
+//     clientY > innerHeight - cornerThreshold
+//   ) {
+//     isMouseInCorner = true;
+//   } else {
+//     isMouseInCorner = false;
+//   }
+// });
 
 // Watch for URL changes and DOM changes
 let lastUrl = location.href;

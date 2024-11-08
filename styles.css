@@ -12,12 +12,16 @@
   height: 40px;
   display: flex;
   align-items: center;
+  color: #59636e;
   justify-content: right;
   gap: 2px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
   border: 1px solid #e1e4e8;
-  transition: all 0.3s ease;
+  transition: width 0.25s cubic-bezier(0.33, 1, 0.68, 1),
+    padding 0.25s cubic-bezier(0.33, 1, 0.68, 1),
+    border-radius 0.25s cubic-bezier(0.33, 1, 0.68, 1);
 }
+
 .expanded-container {
   opacity: 0;
   pointer-events: none;
@@ -47,23 +51,29 @@
   justify-content: center;
   position: relative;
   border-radius: 6px;
+  color: #59636e;
+  transition: opacity 0.2s cubic-bezier(0.33, 1, 0.68, 1);
 }
 
 .dot-button:hover {
   background-color: #f6f8fa;
   color: #24292e;
+  img {
+    opacity: 1;
+  }
 }
 
 .dot-button img {
   width: 16px;
   height: 16px;
+  opacity: 0.6;
 }
 
 .divider {
   width: 1px;
   height: 16px;
   background-color: #e1e4e8;
-  margin: 0 4px;
+  margin: 0 2px;
 }
 
 .tooltip {
