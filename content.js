@@ -109,7 +109,7 @@ function startShrinkTimer(buttonContainer) {
     if (!isMouseInCorner) {
       buttonContainer.classList.add("single-button");
     }
-  }, 2000);
+  }, 5000);
 }
 
 // Listen for mouse movements
